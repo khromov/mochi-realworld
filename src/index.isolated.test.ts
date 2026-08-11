@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { Server } from 'bun';
-import { Mochi, sequence } from 'mochi-framework';
+import { Mochi, noCache, sequence } from 'mochi-framework';
 import { auth, guards } from './handle';
 import { routes } from './routes';
 
@@ -21,7 +21,7 @@ describe('realworld app', () => {
       htmlShell: './src/shell.html',
       errorPage: './src/Error.svelte',
       trailingSlash: 'never',
-      handle: sequence(auth, guards),
+      handle: sequence(auth, guards, noCache),
       routes,
     });
     base = `http://localhost:${server.port}`;
@@ -59,6 +59,19 @@ describe('realworld app', () => {
   test('a profile URL without the leading @ is a 404', async () => {
     const res = await fetch(`${base}/profile/bob`);
     expect(res.status).toBe(404);
+  });
+
+  test('pages opt out of caching and ship speculation rules', async () => {
+    const res = await fetch(`${base}/login`);
+    // Every page varies by the session cookie, and speculation rules fetch pages ahead of a click.
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+
+    const html = await res.text();
+    const rules = html.match(/<script type="speculationrules">([\s\S]*?)<\/script>/);
+    expect(rules).not.toBeNull();
+    expect(Object.keys(JSON.parse(rules![1]!))).toEqual(['prefetch', 'prerender']);
+    // Cross-document view transitions are opted into on every page.
+    expect(html).toContain('@view-transition');
   });
 
   test('the sign-in page renders its form', async () => {

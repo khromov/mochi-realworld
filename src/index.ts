@@ -1,4 +1,4 @@
-import { Mochi, sequence, silenceInternalRoutes } from 'mochi-framework';
+import { Mochi, noCache, sequence, silenceInternalRoutes } from 'mochi-framework';
 import { auth, guards } from './handle';
 import { routes } from './routes';
 
@@ -11,7 +11,10 @@ await Mochi.serve({
   errorPage: './src/Error.svelte',
   // The reference app serves /article/:slug and /profile/@bob without a trailing slash.
   trailingSlash: 'never',
-  handle: sequence(auth, guards),
+  // `noCache` is innermost so it sees the final response. Every page varies by the session cookie,
+  // and the speculation rules in the shell mean pages get fetched ahead of a click, so responses must
+  // revalidate rather than be served from a heuristic cache.
+  handle: sequence(auth, guards, noCache),
   filters: {
     'consoleLogger:line': silenceInternalRoutes,
   },

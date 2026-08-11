@@ -11,7 +11,7 @@
   <title>{error.status}</title>
 </svelte:head>
 
-<Layout>
+<Layout viewTransitions={false}>
   <div>
     {#if error.status === 404}
       <h1>Not found!</h1>

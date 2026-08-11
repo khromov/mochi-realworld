@@ -62,6 +62,26 @@ action runs identically either way. Validation errors reach the no-JS path becau
 Mochi's `form` prop and passes the errors *into* the island as a prop — an island cannot read the
 request context itself, since that throws in the browser.
 
+## Instant navigations
+
+Mochi is an MPA — every navigation is a real page load — so the app leans on two browser features
+that need no client-side router and ship no JavaScript:
+
+- **View Transitions.** `<ViewTransitions type="fade" />` in `src/lib/Layout.svelte` opts every page
+  into the cross-document [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API),
+  so navigations crossfade. The navbar is passed to `keepElementSelectors` to hold it still while the
+  content transitions. The error page opts out — see `HARD_EDGES.md` for why.
+- **Speculation Rules.** `src/shell.html` carries a `<script type="speculationrules">` block using
+  document rules, so the browser speculatively loads whatever link the user is about to click with no
+  per-page bookkeeping. `prefetch` is `moderate` (on hover) across all same-origin links except
+  `/_*`; `prerender` is `conservative` (on pointerdown) and scoped to the read-only reading surfaces
+  — `/`, `/article/*`, `/profile/*`. Prerendering runs a page's `serverProps` for real, so keeping it
+  conservative avoids firing speculative upstream API calls on hover.
+
+Every mutation in the app is a POST, and speculation only ever issues GETs from `<a href>`, so no
+rule here can trigger a side effect. Because every page varies by the session cookie, `noCache` is in
+the middleware chain so responses revalidate rather than being served from a heuristic cache.
+
 ## Deviations from the reference
 
 Forced by the framework:
