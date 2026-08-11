@@ -1,6 +1,34 @@
-import { error } from 'mochi-framework';
+import { MochiCache, error } from 'mochi-framework';
 
 const base = 'https://api.realworld.show/api';
+
+/**
+ * Keyed by token, so one visitor's result never answers for another.
+ *
+ * Fresh for a minute, hard expiry at five: an account wiped mid-window still looks signed in briefly,
+ * which the 401 handling in `handleError` catches anyway.
+ */
+const sessionCache = new MochiCache({
+  minTimeToStale: 60_000,
+  maxTimeToLive: 300_000,
+});
+
+/**
+ * Is this token still live?
+ *
+ * Needed because the public endpoints — `articles`, `tags`, `profiles/:user` — accept an invalid
+ * token and answer 200 regardless. Nothing rejects a dead session while browsing, so the nav would go
+ * on rendering a username for an account the API has since wiped, and only fail once the visitor
+ * clicked something. `GET /user` is the one endpoint that answers the question directly.
+ *
+ * Cached per token, so this costs at most one upstream call per minute per signed-in visitor.
+ */
+export function isTokenValid(token: string): Promise<boolean> {
+  return sessionCache.fetch(`session:${token}`, async () => {
+    const res = await fetch(`${base}/user`, { headers: { Authorization: `Token ${token}` } });
+    return res.ok;
+  });
+}
 
 interface SendOptions {
   method: string;

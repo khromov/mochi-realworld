@@ -126,13 +126,16 @@ Upstream bugs fixed along the way:
 The reference's own quirks are preserved: profile pages render no pagination (its `get_articles`
 returns `pages` while both callers destructure `page`), and `/profile/@bob` keeps the literal `@`.
 
-- **An expired session broke every authenticated page.** The upstream API wipes accounts
-  periodically, so a stored cookie routinely outlives the token inside it. The reference has no
-  handling for this: the API answers `401 { errors: { token: [...] } }`, that body reaches the caller
-  in place of the expected `{ articles }` / `{ article }`, and destructuring it throws. A `handleError`
-  hook now drops the dead cookie — re-requesting the same URL on a GET so the page renders signed out,
-  and showing "your session has expired" on a form submit. `?tab=feed` also falls back to the global
-  feed when signed out, since the auth-only endpoint returns no `articles` key.
+- **An expired session left the app lying about who you were.** The upstream API wipes accounts
+  periodically, so a stored cookie routinely outlives the token inside it — and its public endpoints
+  (`articles`, `tags`, `profiles/:user`) accept a dead token and answer 200 anyway. Nothing rejected
+  the session while browsing, so the nav kept rendering a username for an account that no longer
+  existed, and only the next authenticated action failed. `src/handle.ts` now validates the token
+  against `GET /user` before trusting the cookie, cached per token via `MochiCache` so it costs at
+  most one upstream call a minute per signed-in visitor, and drops the cookie when it comes back
+  dead. A `handleError` hook remains the backstop for a token that dies mid-window.
+- **`?tab=feed` 500'd when signed out.** The auth-only endpoint returns an error body with no
+  `articles` key, and destructuring it threw. It falls back to the global feed.
 - **Avatars were broken for anyone without a profile picture.** The API returns `image: null` for
   users who never set one, and the reference renders `src={author.image}` directly in four of the
   five places it shows an avatar — only `CommentInput` uses the `placeholder` constant it exports.

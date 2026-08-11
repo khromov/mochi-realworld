@@ -86,20 +86,40 @@ describe('realworld app', () => {
   });
 
   // The upstream API wipes accounts periodically, so a stored cookie outliving its token is routine.
+  // `?tab=feed` used to 500: the auth-only endpoint answered with an error body carrying no
+  // `articles` key, and destructuring it threw.
   test('an expired session is cleared rather than 500ing', async () => {
     const dead = btoa(
       JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
     );
 
-    // `articles/feed` is auth-only, so a dead token is rejected there.
     const res = await fetch(`${base}/?tab=feed`, {
       headers: { cookie: `jwt=${dead}` },
       redirect: 'manual',
     });
 
-    expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe('/?tab=feed');
+    expect(res.status).toBe(200);
     expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+
+    const html = await res.text();
+    expect(html).not.toContain('Something went wrong');
+    expect(html).toContain('Global Feed');
+  });
+
+  test('a wiped account is signed out on any page, not just authenticated ones', async () => {
+    const dead = btoa(
+      JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
+    );
+
+    // The public endpoints accept a dead token and answer 200, so nothing here rejects the session —
+    // it has to be validated up front or the nav renders a username for an account that is gone.
+    const res = await fetch(base, { headers: { cookie: `jwt=${dead}` } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+
+    const html = await res.text();
+    expect(html).not.toContain('>ghost<');
+    expect(html).toContain('Sign up');
   });
 
   test('?tab=feed signed out falls back to the global feed', async () => {
