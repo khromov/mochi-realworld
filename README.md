@@ -127,3 +127,13 @@ returns `pages` while both callers destructure `page`), and `/profile/@bob` keep
 
 The Bootstrap theme is vendored to `public/main.css`. The reference links
 `//demo.productionready.io/main.css`, which now 404s — the upstream demo is unstyled because of it.
+
+Crawlers are blocked, where the reference explicitly allowed them (its `robots.txt` is `Disallow:`
+with an empty value). This is a framework-port demo rather than the canonical RealWorld app, and
+every page render costs calls to the shared public API at `api.realworld.show`. `public/robots.txt`
+sends `Disallow: /` and `src/shell.html` adds `<meta name="robots" content="noindex, nofollow">` for
+bots that ignore it. Note the two only partly overlap: a crawler that honours `Disallow: /` never
+fetches the page, so it never sees the meta tag — and `Disallow` alone doesn't guarantee absence from
+results, since a URL can still be indexed from inbound links. Blocking the fetches is the priority
+here because of the upstream API cost; if staying out of search results ever matters more, the right
+config is the inverse — allow crawling and rely on the `noindex` tag.
