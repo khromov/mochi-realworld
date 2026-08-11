@@ -7,7 +7,7 @@
     "ghcr.io/devcontainers/features/node:2.1.0": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
-  "forwardPorts": [6969],
+  "forwardPorts": [3333],
   "portsAttributes": {
     "3333": {
       "label": "mochi-realworld",
