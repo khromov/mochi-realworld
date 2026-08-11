@@ -49,13 +49,37 @@
       .navbar {
         view-transition-name: conduit-navbar;
       }
-      ::view-transition-group(conduit-navbar) {
+
+      /*
+        Same treatment for headers that two pages render identically: the green home banner (shared by
+        every /?tab= and /?tag= view) and the profile header (shared by a profile's Articles and
+        Favorites tabs). Crossfading a header against an identical copy of itself just reads as a
+        flicker.
+
+        Each gets its own name so it only ever pairs with itself. Navigating somewhere without that
+        header leaves it unpaired, and it fades normally. The article banner is deliberately left
+        unnamed — its <h1> is the page's actual content, so it should animate.
+      */
+      .home-page .banner {
+        view-transition-name: conduit-home-banner;
+      }
+      .profile-page .user-info {
+        view-transition-name: conduit-profile-header;
+      }
+
+      ::view-transition-group(conduit-navbar),
+      ::view-transition-group(conduit-home-banner),
+      ::view-transition-group(conduit-profile-header) {
         animation: none;
       }
-      ::view-transition-old(conduit-navbar) {
+      ::view-transition-old(conduit-navbar),
+      ::view-transition-old(conduit-home-banner),
+      ::view-transition-old(conduit-profile-header) {
         display: none;
       }
-      ::view-transition-new(conduit-navbar) {
+      ::view-transition-new(conduit-navbar),
+      ::view-transition-new(conduit-home-banner),
+      ::view-transition-new(conduit-profile-header) {
         animation: none;
       }
     </style>

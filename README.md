@@ -69,7 +69,11 @@ that need no client-side router and ship no JavaScript:
 
 - **View Transitions.** `<ViewTransitions type="fade" />` in `src/lib/Layout.svelte` opts every page
   into the cross-document [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API),
-  so navigations crossfade. The navbar is held still by hand-written CSS in `src/shell.html` rather
+  so navigations crossfade. Headers that two pages render identically are held still instead — the
+  navbar, the green home banner (shared by every `?tab=` / `?tag=` view) and the profile header
+  (shared by a profile's Articles and Favorites tabs) — since crossfading a header against an
+  identical copy of itself just reads as a flicker. The article banner is deliberately left animating,
+  because its `<h1>` is the page's actual content. This is hand-written CSS in `src/shell.html` rather
   than the component's `keepElementSelectors`, which paints both snapshots at once and visibly darkens
   a transparent element. The error page opts out entirely. Both reasons are in `HARD_EDGES.md`.
 - **Speculation Rules.** `src/shell.html` carries a `<script type="speculationrules">` block using
