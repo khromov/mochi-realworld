@@ -78,6 +78,11 @@ that need no client-side router and ship no JavaScript:
   — `/`, `/article/*`, `/profile/*`. Prerendering runs a page's `serverProps` for real, so keeping it
   conservative avoids firing speculative upstream API calls on hover.
 
+`src/shell.html` also sets `html { scrollbar-gutter: stable }`. RealWorld's `.container` is a fixed
+1140px centred with auto margins, so a page that scrolls and a page that doesn't differ in viewport
+width by the scrollbar — sliding the navbar 7.5px sideways between routes. Barely noticeable on a
+plain navigation, but the view transition snapshots the navbar and turns it into a visible jump.
+
 Every mutation in the app is a POST, and speculation only ever issues GETs from `<a href>`, so no
 rule here can trigger a side effect. Because every page varies by the session cookie, `noCache` is in
 the middleware chain so responses revalidate rather than being served from a heuristic cache.

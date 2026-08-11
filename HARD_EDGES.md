@@ -244,6 +244,34 @@ invented for it. A default derived from the status text would remove a small pap
 
 ---
 
+---
+
+## 9. Docs suggestion: view transitions make scrollbar-driven layout shift visible
+
+**Not a bug — a one-line addition to the View Transitions page that would save people time.**
+
+Because Mochi is an MPA, `<ViewTransitions />` is likely to be many users' first encounter with a
+layout shift they had always been living with. Any centred fixed-width container shifts by half the
+scrollbar width between a page that scrolls and one that doesn't. On a plain navigation that reads as
+a barely-perceptible flicker; snapshotted into a view transition, it becomes an obvious jump, and it
+looks like the transition is broken rather than the layout.
+
+Measured in this app: a 15px viewport delta moved the navbar brand by exactly 7.5px between `/` (966px
+tall, no scrollbar at a 1100px viewport) and `/article/:slug` (1429px tall, scrollbar). The whole fix
+is:
+
+```css
+html {
+  scrollbar-gutter: stable;
+}
+```
+
+Worth a callout in the View Transitions docs — perhaps next to `keepElementSelectors`, since frozen
+persistent chrome is exactly where the jump is most obvious. Baseline for `scrollbar-gutter` (Chrome
+94+, Firefox 97+, Safari 18.2+) comfortably covers everywhere cross-document transitions run.
+
+---
+
 ## What worked well
 
 Worth saying, because these are the decisions that made the port viable at all:

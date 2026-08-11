@@ -24,6 +24,18 @@
     -->
     <link rel="stylesheet" href="/main.css" />
 
+    <style>
+      /*
+        Always reserve the scrollbar gutter. RealWorld's `.container` is a fixed 1140px centred with
+        auto margins, so a page that scrolls and a page that doesn't differ in viewport width by the
+        scrollbar (~15px), sliding the navbar 7.5px sideways between routes. Harmless on its own, but
+        the cross-document view transition snapshots the navbar and the shift becomes a visible jump.
+      */
+      html {
+        scrollbar-gutter: stable;
+      }
+    </style>
+
     {{mochi.head}} {{mochi.css}}
   </head>
   <body>
