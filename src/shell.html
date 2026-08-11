@@ -3,8 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mochi minimal</title>
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
+
+    <!-- Import Ionicon icons & Google Fonts our Bootstrap theme relies on -->
+    <link
+      href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <!--
+      The custom Bootstrap 4 theme. The reference app links //demo.productionready.io/main.css, but
+      that CDN now 404s (the upstream demo is unstyled because of it), so the original stylesheet is
+      vendored into public/ and served locally.
+    -->
+    <link rel="stylesheet" href="/main.css" />
+
     {{mochi.head}} {{mochi.css}}
   </head>
   <body>
