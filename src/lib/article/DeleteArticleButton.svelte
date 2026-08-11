@@ -1,7 +1,5 @@
 <script lang="ts">
   import { enhance } from 'mochi-framework';
-
-  // Bare enhance: the action returns redirect(303, '/') and enhance's default fallback follows it.
 </script>
 
 <form method="POST" action="?/deleteArticle" {@attach enhance()}>

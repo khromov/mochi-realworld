@@ -5,8 +5,7 @@
   import ListErrors from '../ListErrors.svelte';
   import type { ApiErrors } from '../types';
 
-  // `errors` is the SSR snapshot from the page's `form` prop, so the no-JS POST re-render still shows
-  // validation errors. With JS, enhance results take over.
+  // The SSR snapshot from the page's `form` prop, so the no-JS POST re-render still shows errors.
   const { errors }: { errors?: ApiErrors } = $props();
 
   let clientErrors = $state<ApiErrors | undefined>(undefined);

@@ -3,11 +3,8 @@
   import Comment from './Comment.svelte';
   import CommentInput from './CommentInput.svelte';
 
-  // This whole container is one island. SvelteKit refreshes the list with `invalidateAll()` after each
-  // mutation; Mochi has no client router, so the actions return the created/deleted comment and the
-  // list updates in place. Without JS the plain POST re-renders the page and serverProps refetches.
-  //
-  // Its children must stay directive-free — nesting a hydratable island is a compile error.
+  // Standing in for `invalidateAll()`: the actions return the affected comment and this list updates
+  // in place. Children must stay directive-free — nesting a hydratable island is a compile error.
   let { comments, user }: { comments: CommentType[]; user: PublicUser | null } = $props();
 
   // svelte-ignore state_referenced_locally

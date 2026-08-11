@@ -9,11 +9,9 @@ await Mochi.serve({
   development: process.env.MODE === 'development',
   htmlShell: './src/shell.html',
   errorPage: './src/Error.svelte',
-  // The reference app serves /article/:slug and /profile/@bob without a trailing slash.
   trailingSlash: 'never',
-  // `noCache` is innermost so it sees the final response. Every page varies by the session cookie,
-  // and the speculation rules in the shell mean pages get fetched ahead of a click, so responses must
-  // revalidate rather than be served from a heuristic cache.
+  // `noCache` is innermost so it sees the final response; every page varies by the session cookie, and
+  // the shell's speculation rules fetch pages ahead of a click.
   handle: sequence(auth, guards, noCache),
   handleError,
   filters: {

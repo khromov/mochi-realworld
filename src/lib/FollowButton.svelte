@@ -11,7 +11,6 @@
   const submit: MochiSubmitFunction = () => {
     const previous = isFollowing;
 
-    // optimistic UI
     isFollowing = !isFollowing;
     pending = true;
 

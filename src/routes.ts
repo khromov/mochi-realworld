@@ -19,10 +19,7 @@ function requireParam(params: Record<string, string>, name: string): string {
   return value;
 }
 
-/**
- * Bun's `:user` captures the whole segment including the literal `@`, and it also matches a bare
- * `/profile/bob` — which the reference app 404s. Assert the `@` and strip it.
- */
+/** Bun's `:user` keeps the literal `@` and also matches a bare `/profile/bob`, which upstream 404s. */
 function profileUsername(params: Record<string, string>): string {
   const segment = requireParam(params, 'user');
   if (!segment.startsWith('@')) {
@@ -39,7 +36,6 @@ async function getProfile(username: string): Promise<Profile> {
   return profile;
 }
 
-/** Port of the reference's `profile/@[user]/get_articles.js`. */
 async function getArticles(username: string, type: 'author' | 'favorited'): Promise<Article[]> {
   const { url } = getRequestContext();
   const p = Number(url.searchParams.get('page')) || 1;
@@ -61,9 +57,7 @@ export const routes: Record<string, MochiRouteValue> = {
       const tag = url.searchParams.get('tag');
       const page = Number(url.searchParams.get('page') ?? '1');
 
-      // `articles/feed` is auth-only, and the "Your Feed" pill is not rendered when signed out — but
-      // the URL is reachable directly, and calling it anonymously returns an error body with no
-      // `articles` key, which then blows up on destructuring.
+      // Called anonymously, the auth-only feed returns an error body with no `articles` key to destructure.
       const token = currentUser()?.token;
       const endpoint = tab === 'feed' && token ? 'articles/feed' : 'articles';
 
@@ -137,9 +131,7 @@ export const routes: Record<string, MochiRouteValue> = {
           error(401, 'Unauthorized');
         }
 
-        // A blank password means "leave it unchanged". The reference sends it anyway, which the API
-        // rejects with a length error on every save — invisible upstream only because of the error
-        // display bug fixed below, so omit the field when it is empty.
+        // Sending a blank password fails the API's length check, so omit it to mean "leave unchanged".
         const password = String(formData.get('password') ?? '');
 
         const body = await api.put<UserResponse>(
@@ -156,21 +148,19 @@ export const routes: Record<string, MochiRouteValue> = {
           user.token,
         );
 
-        // The reference returns `fail(400, body.errors)` while its template reads `form.errors`, so
-        // validation errors never render. Fixed here to match login/register.
+        // Upstream nests this one level too deep (`fail(400, body.errors)` vs `form.errors`), so errors never render.
         if (body.errors || !body.user) {
           return fail(400, { errors: body.errors ?? { settings: ['could not be saved'] } });
         }
 
         cookies.set(SESSION_COOKIE, encodeSession(body.user), { path: '/' });
-        // Keep the POST re-render's baseProps() in sync with the freshly saved profile.
+        // Keeps the POST re-render's baseProps() in sync with the freshly saved profile.
         locals.user = body.user;
 
         return success({});
       },
 
-      // The reference relies on invalidation plus its load guard to bounce the user. Mochi re-renders
-      // instead, and the page needs a user, so redirect explicitly.
+      // Must redirect explicitly: Mochi re-renders instead of invalidating, and this page needs a user.
       logout: ({ cookies }) => {
         cookies.delete(SESSION_COOKIE, { path: '/' });
         return redirect(303, '/login');
@@ -240,8 +230,7 @@ export const routes: Record<string, MochiRouteValue> = {
           user.token,
         );
 
-        // The reference throws `error(400, ...)` here — a full error page — while the sibling /editor
-        // route renders errors inline. Made consistent.
+        // Upstream throws here, showing an error page where the sibling /editor route renders errors inline.
         if (result.errors || !result.article) {
           return fail(400, { errors: result.errors ?? { article: ['could not be updated'] } });
         }
@@ -318,15 +307,13 @@ export const routes: Record<string, MochiRouteValue> = {
         // The hidden checkbox carries the CURRENT state, so the desired state is its inverse.
         const favorited = formData.get('favorited') !== 'on';
 
-        // Awaited, unlike the reference's fire-and-forget, which races the redirect.
         if (favorited) {
           await api.post(`articles/${slug}/favorite`, null, user.token);
         } else {
           await api.del(`articles/${slug}/favorite`, user.token);
         }
 
-        // 303, not the reference's 307: 307 preserves the method, so a no-JS favorite click would
-        // re-POST to the referring page, which has no matching action, and 405.
+        // Must be 303, not 307: 307 preserves the method, so a no-JS click re-POSTs to the referrer and 405s.
         return redirect(303, request.headers.get('referer') ?? `/article/${slug}`);
       },
     },

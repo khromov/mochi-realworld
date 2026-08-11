@@ -2,15 +2,11 @@ import type { SessionUser } from './types';
 
 export const SESSION_COOKIE = 'jwt';
 
-/**
- * The reference app stores the whole user record — API token included — as base64 in a `jwt` cookie.
- * Kept as-is so cookies stay interchangeable with the original app.
- */
+/** Base64 of the whole user record, API token included, kept as-is so cookies interoperate with the reference app. */
 export function encodeSession(user: SessionUser): string {
   return btoa(JSON.stringify(user));
 }
 
-/** Decode the session cookie. Returns null for a missing or malformed value rather than throwing. */
 export function decodeSession(value: string | undefined): SessionUser | null {
   if (!value) {
     return null;

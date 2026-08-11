@@ -2,26 +2,14 @@ import { MochiCache, error } from 'mochi-framework';
 
 const base = 'https://api.realworld.show/api';
 
-/**
- * Keyed by token, so one visitor's result never answers for another.
- *
- * Fresh for a minute, hard expiry at five: an account wiped mid-window still looks signed in briefly,
- * which the 401 handling in `handleError` catches anyway.
- */
 const sessionCache = new MochiCache({
   minTimeToStale: 60_000,
   maxTimeToLive: 300_000,
 });
 
 /**
- * Is this token still live?
- *
- * Needed because the public endpoints — `articles`, `tags`, `profiles/:user` — accept an invalid
- * token and answer 200 regardless. Nothing rejects a dead session while browsing, so the nav would go
- * on rendering a username for an account the API has since wiped, and only fail once the visitor
- * clicked something. `GET /user` is the one endpoint that answers the question directly.
- *
- * Cached per token, so this costs at most one upstream call per minute per signed-in visitor.
+ * The public endpoints accept an invalid token and answer 200 regardless, so `GET /user` is the only
+ * way to tell a dead session from a live one.
  */
 export function isTokenValid(token: string): Promise<boolean> {
   return sessionCache.fetch(`session:${token}`, async () => {
@@ -38,24 +26,9 @@ interface SendOptions {
 }
 
 /**
- * Port of the reference app's `src/lib/api.js`.
- *
- * Note the 422 special case: RealWorld returns validation failures as `422 { errors: {...} }`, and
- * callers want that body rather than an exception, so 422 is treated as a success here. Any other
- * non-ok status becomes an HTTP error and renders the error page.
- *
- * 401 is included alongside it, which the reference omits, but only when the request carried no
- * token. The two 401s mean different things:
- *
- *   - **No token sent** — a sign-in attempt failed: `401 { errors: { credentials: ['invalid'] } }`.
- *     Return it so the form can render the message inline. (Upstream this throws to the error page,
- *     making the login action's `if (body.errors)` branch unreachable.)
- *   - **Token sent** — the session is dead: `401 { errors: { token: ['is missing'] } }`. Returning
- *     that as data hands callers a body with no `articles` / `article` key, which then blows up on
- *     destructuring. It is an expired session, so raise it and let `handleError` clear the cookie.
- *
- * The upstream API wipes accounts periodically, so a stored cookie outliving its token is routine
- * rather than exceptional.
+ * A 422, or a 401 on a request that carried no token, is returned as data so validation and
+ * bad-credential messages reach the form; a 401 on an authenticated request means the session died
+ * and is raised instead, so `handleError` can clear the cookie.
  */
 async function send<T>({ method, path, data, token }: SendOptions): Promise<T> {
   const headers: Record<string, string> = {};

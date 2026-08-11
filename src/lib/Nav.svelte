@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { PublicUser } from './types';
 
-  // The reference reads `page.url.pathname` / `page.data.user` from SvelteKit's page store. Mochi has
-  // no such store, and the error page renders outside a request context, so both arrive as props.
+  // Both arrive as props because the error page renders outside a request context.
   let { user = null, pathname = '' }: { user?: PublicUser | null; pathname?: string } = $props();
 </script>
 

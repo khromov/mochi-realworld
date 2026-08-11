@@ -2,7 +2,6 @@
   import type { Article, PublicUser } from '../types';
   import ArticlePreview from './ArticlePreview.svelte';
 
-  // The reference reads `user` from `page.data`; Mochi threads it down as a prop.
   const { articles, user }: { articles: Article[]; user: PublicUser | null } = $props();
 </script>
 

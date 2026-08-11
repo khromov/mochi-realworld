@@ -4,8 +4,7 @@
   import { placeholder } from '../constants';
   import type { Comment, PublicUser } from '../types';
 
-  // Rendered inside the CommentContainer island, so `onCreated` is an ordinary Svelte prop — the
-  // devalue boundary is at the island root, not here.
+  // `onCreated` is an ordinary prop: the devalue boundary is at the island root, not here.
   const { user, onCreated }: { user: PublicUser; onCreated: (comment: Comment) => void } = $props();
 
   const submit: MochiSubmitFunction<{ comment: Comment }> = () => {

@@ -64,14 +64,12 @@ describe('realworld app', () => {
 
   test('pages opt out of caching and ship speculation rules', async () => {
     const res = await fetch(`${base}/login`);
-    // Every page varies by the session cookie, and speculation rules fetch pages ahead of a click.
     expect(res.headers.get('cache-control')).toBe('no-cache');
 
     const html = await res.text();
     const rules = html.match(/<script type="speculationrules">([\s\S]*?)<\/script>/);
     expect(rules).not.toBeNull();
     expect(Object.keys(JSON.parse(rules![1]!))).toEqual(['prefetch', 'prerender']);
-    // Cross-document view transitions are opted into on every page.
     expect(html).toContain('@view-transition');
   });
 
@@ -85,9 +83,7 @@ describe('realworld app', () => {
     expect(html).toContain('navbar-brand');
   });
 
-  // The upstream API wipes accounts periodically, so a stored cookie outliving its token is routine.
-  // `?tab=feed` used to 500: the auth-only endpoint answered with an error body carrying no
-  // `articles` key, and destructuring it threw.
+  // The auth-only feed answers with an error body carrying no `articles` key, which used to throw.
   test('an expired session is cleared rather than 500ing', async () => {
     const dead = btoa(
       JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
@@ -111,8 +107,7 @@ describe('realworld app', () => {
       JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
     );
 
-    // The public endpoints accept a dead token and answer 200, so nothing here rejects the session —
-    // it has to be validated up front or the nav renders a username for an account that is gone.
+    // The public endpoints accept a dead token and answer 200, so the session must be validated up front.
     const res = await fetch(base, { headers: { cookie: `jwt=${dead}` } });
     expect(res.status).toBe(200);
     expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
@@ -128,7 +123,6 @@ describe('realworld app', () => {
     expect(await res.text()).toContain('Global Feed');
   });
 
-  // Hits the live RealWorld API, which this app is a client for.
   test('the home page renders the global feed', async () => {
     const res = await fetch(base);
     expect(res.status).toBe(200);

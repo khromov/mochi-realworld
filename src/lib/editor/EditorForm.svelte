@@ -12,8 +12,7 @@
   // svelte-ignore state_referenced_locally
   let tagList = $state(article.tagList);
 
-  // `errors` is the SSR snapshot from the page's `form` prop (the no-JS path). Once the user submits
-  // with JS on, results from enhance take over.
+  // The SSR snapshot from the page's `form` prop, so the no-JS POST re-render still shows errors.
   let clientErrors = $state<ApiErrors | undefined>(undefined);
   let submitted = $state(false);
   const shownErrors = $derived(submitted ? clientErrors : errors);

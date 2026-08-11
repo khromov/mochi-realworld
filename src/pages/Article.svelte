@@ -34,7 +34,7 @@
       <div class="row article-content">
         <div class="col-xs-12">
           <div>
-            <!-- Rendered from markdown and sanitized on the server; see lib/markdown.server.ts -->
+            <!-- Sanitized server-side in lib/markdown.server.ts before it reaches {@html}. -->
             {@html article.body}
           </div>
 

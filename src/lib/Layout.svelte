@@ -5,8 +5,7 @@
   import Nav from './Nav.svelte';
   import type { PublicUser } from './types';
 
-  // Mochi has no layout system, so every page imports this wrapper explicitly. It must stay
-  // server-only: islands cannot receive snippet props.
+  // Must stay server-only: islands cannot receive snippet props.
   let {
     user = null,
     pathname = '',
@@ -21,17 +20,9 @@
 </script>
 
 <!--
-  Every page renders exactly one of these, which is what the cross-document View Transitions API needs
-  — both the page you leave and the page you land on must opt in. Ships zero JavaScript; the browser
-  does the animating. The navbar is held still so only the content crossfades.
-
-  Shared headers are held still by hand-written CSS in shell.html rather than the component's
-  `keepElementSelectors`, which emits `animation: none` on both snapshots and leaves them painted on
-  top of each other — visibly darkening the transparent navbar.
-
-  Opted out of on the error page: <ViewTransitions> reads getRequestContext().locals to enforce its
-  one-per-page rule, and the unmatched-route path renders the error page without a request context, so
-  including it there takes the 404 page down.
+  Opted out of on the error page: <ViewTransitions> reads getRequestContext().locals, and the
+  unmatched-route path renders without a request context. Shared headers are frozen by hand in
+  shell.html because `keepElementSelectors` paints both snapshots at once and darkens the navbar.
 -->
 {#if viewTransitions}
   <ViewTransitions type="fade" duration={180} />

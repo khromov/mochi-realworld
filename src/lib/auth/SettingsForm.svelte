@@ -11,8 +11,7 @@
   let submitted = $state(false);
   const shownErrors = $derived(submitted ? clientErrors : errors);
 
-  // The reference passes `update({ reset: false })` so a successful save keeps what you typed. Mochi
-  // has no re-render to trigger, so leaving the fields untouched is the equivalent.
+  // Leaving the fields untouched is Mochi's equivalent of the reference's `update({ reset: false })`.
   const submit: MochiSubmitFunction<Record<string, unknown>, { errors: ApiErrors }> = () => {
     return ({ result }) => {
       submitted = true;
@@ -86,7 +85,6 @@
 
 <hr />
 
-<!-- Bare enhance: the logout action returns redirect(303, '/login'). -->
 <form method="POST" action="?/logout" {@attach enhance()}>
   <button class="btn btn-outline-danger">Or click here to logout.</button>
 </form>

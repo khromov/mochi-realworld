@@ -8,8 +8,7 @@
     favoritesCount,
   }: { slug: string; favorited: boolean; favoritesCount: number } = $props();
 
-  // The reference mutates `article.favorited` in place, which works because SvelteKit's `data` is a
-  // deeply reactive proxy. Mochi island props are plain values, so the optimistic state lives here.
+  // Island props are plain values, not SvelteKit's deep-reactive `data`, so optimistic state lives here.
   // svelte-ignore state_referenced_locally
   let isFavorited = $state(favorited);
   // svelte-ignore state_referenced_locally
@@ -19,7 +18,6 @@
   const submit: MochiSubmitFunction = () => {
     const previous = { isFavorited, count };
 
-    // optimistic UI
     if (isFavorited) {
       isFavorited = false;
       count -= 1;
@@ -39,7 +37,7 @@
   };
 </script>
 
-<!-- Posts cross-route to the article's own action, exactly as the reference does from / and /profile. -->
+<!-- Posts cross-route to the article's own action, from / and /profile alike. -->
 <form
   method="POST"
   action="/article/{slug}?/toggleFavorite"

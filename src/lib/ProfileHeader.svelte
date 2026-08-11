@@ -4,8 +4,7 @@
   import FollowButton from './FollowButton.svelte';
   import type { Profile, PublicUser } from './types';
 
-  // Port of the reference's `profile/@[user]/+layout.svelte`. Mochi has no layouts, so both profile
-  // pages import this and pass their own `isFavorites` instead of comparing SvelteKit route ids.
+  // Mochi has no layouts, so both profile pages import this and pass their own `isFavorites`.
   const {
     profile,
     user,

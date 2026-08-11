@@ -2,8 +2,8 @@
   import type { MochiErrorProps } from 'mochi-framework';
   import Layout from './lib/Layout.svelte';
 
-  // The unmatched-route path renders this without a request context, so nothing here (or in Layout /
-  // Nav) may touch `url`, `params`, `locals`, `cookies`, or `getRequestContext()`.
+  // The unmatched-route path renders this without a request context, so nothing here may touch `url`,
+  // `params`, `locals`, `cookies`, or `getRequestContext()`.
   let { error }: MochiErrorProps = $props();
 </script>
 
@@ -17,10 +17,6 @@
       <h1>Not found!</h1>
     {:else}
       <h1>Something went wrong</h1>
-      <!--
-        The reference stops at the heading. An expired session is common enough here — the upstream
-        API wipes accounts periodically — that saying so beats leaving people guessing.
-      -->
       {#if error.message && error.message !== 'Internal Server Error'}
         <p class="detail">{error.message}</p>
       {/if}

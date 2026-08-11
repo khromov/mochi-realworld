@@ -1,5 +1,3 @@
-/** Shapes returned by the RealWorld API (https://api.realworld.show/api). */
-
 export interface Author {
   username: string;
   bio: string | null;
@@ -35,7 +33,7 @@ export interface Profile {
   following: boolean;
 }
 
-/** The full user record, including the API token. Lives in `locals.user`; never sent to the client. */
+/** Carries the API token, so it stays in `locals.user` and never reaches the client. */
 export interface SessionUser {
   email: string;
   username: string;
@@ -44,7 +42,6 @@ export interface SessionUser {
   token: string;
 }
 
-/** The subset the reference app's root layout exposes to the browser — no token. */
 export interface PublicUser {
   username: string;
   email: string;
@@ -52,10 +49,8 @@ export interface PublicUser {
   bio: string | null;
 }
 
-/** RealWorld validation errors: `{ email: ['is invalid', 'has already been taken'] }`. */
 export type ApiErrors = Record<string, string[]>;
 
-/** The draft an editor form round-trips. */
 export interface ArticleDraft {
   title: string;
   description: string;
