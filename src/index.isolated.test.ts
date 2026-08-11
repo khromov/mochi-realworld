@@ -2,25 +2,27 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { Server } from 'bun';
-import { Mochi } from 'mochi-framework';
+import { Mochi, noCache, sequence } from 'mochi-framework';
+import { auth, guards, handleError } from './handle';
+import { routes } from './routes';
 
-const routes = {
-  '/': Mochi.page('./src/HelloWorld.svelte'),
-};
-
-describe('minimal app', () => {
+describe('realworld app', () => {
   let server: Server<undefined>;
   let outDir: string;
   let base: string;
 
   beforeAll(async () => {
-    outDir = mkdtempSync(path.join(import.meta.dir, '..', '.mochi-minimal-test-'));
+    outDir = mkdtempSync(path.join(import.meta.dir, '..', '.mochi-realworld-test-'));
     server = await Mochi.serve({
       port: 0,
       development: false,
       logger: { enabled: false },
       outDir,
       htmlShell: './src/shell.html',
+      errorPage: './src/Error.svelte',
+      trailingSlash: 'never',
+      handle: sequence(auth, guards, noCache),
+      handleError,
       routes,
     });
     base = `http://localhost:${server.port}`;
@@ -31,9 +33,103 @@ describe('minimal app', () => {
     rmSync(outDir, { recursive: true, force: true });
   });
 
-  test('GET / renders Hello world', async () => {
+  test('unmatched routes render the error page', async () => {
+    const res = await fetch(`${base}/nope`);
+    expect(res.status).toBe(404);
+    expect(await res.text()).toContain('Not found!');
+  });
+
+  test('/profile redirects an anonymous visitor to /login', async () => {
+    const res = await fetch(`${base}/profile`, { redirect: 'manual' });
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe('/login');
+  });
+
+  test('/settings redirects an anonymous visitor to /login', async () => {
+    const res = await fetch(`${base}/settings`, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login');
+  });
+
+  test('/editor redirects an anonymous visitor to /login', async () => {
+    const res = await fetch(`${base}/editor`, { redirect: 'manual' });
+    expect(res.status).toBe(302);
+    expect(res.headers.get('location')).toBe('/login');
+  });
+
+  test('a profile URL without the leading @ is a 404', async () => {
+    const res = await fetch(`${base}/profile/bob`);
+    expect(res.status).toBe(404);
+  });
+
+  test('pages opt out of caching and ship speculation rules', async () => {
+    const res = await fetch(`${base}/login`);
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+
+    const html = await res.text();
+    const rules = html.match(/<script type="speculationrules">([\s\S]*?)<\/script>/);
+    expect(rules).not.toBeNull();
+    expect(Object.keys(JSON.parse(rules![1]!))).toEqual(['prefetch', 'prerender']);
+    expect(html).toContain('@view-transition');
+  });
+
+  test('the sign-in page renders its form', async () => {
+    const res = await fetch(`${base}/login`);
+    expect(res.status).toBe(200);
+
+    const html = await res.text();
+    expect(html).toContain('Sign In');
+    expect(html).toContain('name="email"');
+    expect(html).toContain('navbar-brand');
+  });
+
+  // The auth-only feed answers with an error body carrying no `articles` key, which used to throw.
+  test('an expired session is cleared rather than 500ing', async () => {
+    const dead = btoa(
+      JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
+    );
+
+    const res = await fetch(`${base}/?tab=feed`, {
+      headers: { cookie: `jwt=${dead}` },
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+
+    const html = await res.text();
+    expect(html).not.toContain('Something went wrong');
+    expect(html).toContain('Global Feed');
+  });
+
+  test('a wiped account is signed out on any page, not just authenticated ones', async () => {
+    const dead = btoa(
+      JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
+    );
+
+    // The public endpoints accept a dead token and answer 200, so the session must be validated up front.
+    const res = await fetch(base, { headers: { cookie: `jwt=${dead}` } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+
+    const html = await res.text();
+    expect(html).not.toContain('>ghost<');
+    expect(html).toContain('Sign up');
+  });
+
+  test('?tab=feed signed out falls back to the global feed', async () => {
+    const res = await fetch(`${base}/?tab=feed`);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('Global Feed');
+  });
+
+  test('the home page renders the global feed', async () => {
     const res = await fetch(base);
     expect(res.status).toBe(200);
-    expect(await res.text()).toContain('Hello Mochi!');
+
+    const html = await res.text();
+    expect(html).toContain('<title>Conduit</title>');
+    expect(html).toContain('Popular Tags');
+    expect(html).toContain('article-preview');
   });
 });

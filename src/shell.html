@@ -3,8 +3,104 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mochi minimal</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
+
+    <link rel="stylesheet" href="/ionicons/css/ionicons.min.css" type="text/css" />
+    <link rel="stylesheet" href="/main.css" />
+
+    <style>
+      html {
+        scrollbar-gutter: stable;
+      }
+
+      .navbar {
+        view-transition-name: conduit-navbar;
+      }
+      .home-page .banner {
+        view-transition-name: conduit-home-banner;
+      }
+      .profile-page .user-info {
+        view-transition-name: conduit-profile-header;
+      }
+
+      ::view-transition-group(conduit-navbar),
+      ::view-transition-group(conduit-home-banner),
+      ::view-transition-group(conduit-profile-header) {
+        animation: none;
+      }
+      ::view-transition-old(conduit-navbar),
+      ::view-transition-old(conduit-home-banner),
+      ::view-transition-old(conduit-profile-header) {
+        display: none;
+      }
+      ::view-transition-new(conduit-navbar),
+      ::view-transition-new(conduit-home-banner),
+      ::view-transition-new(conduit-profile-header) {
+        animation: none;
+      }
+
+      @keyframes conduit-vt-fade-out {
+        to {
+          opacity: 0;
+        }
+      }
+      @keyframes conduit-vt-fade-in {
+        from {
+          opacity: 0;
+        }
+      }
+
+      ::view-transition-old(conduit-navbar):only-child,
+      ::view-transition-old(conduit-home-banner):only-child,
+      ::view-transition-old(conduit-profile-header):only-child {
+        display: block;
+        animation: conduit-vt-fade-out 180ms ease both;
+      }
+      ::view-transition-new(conduit-navbar):only-child,
+      ::view-transition-new(conduit-home-banner):only-child,
+      ::view-transition-new(conduit-profile-header):only-child {
+        animation: conduit-vt-fade-in 180ms ease both;
+      }
+    </style>
+
+    <script type="speculationrules">
+      {
+        "prefetch": [
+          {
+            "where": {
+              "and": [
+                { "href_matches": "/*" },
+                { "not": { "href_matches": "/_*" } },
+                { "not": { "selector_matches": "[target=_blank]" } },
+                { "not": { "selector_matches": "[rel~=nofollow]" } }
+              ]
+            },
+            "eagerness": "moderate"
+          }
+        ],
+        "prerender": [
+          {
+            "where": {
+              "and": [
+                {
+                  "or": [
+                    { "href_matches": "/" },
+                    { "href_matches": "/article/*" },
+                    { "href_matches": "/profile/*" }
+                  ]
+                },
+                { "not": { "selector_matches": "[target=_blank]" } },
+                { "not": { "selector_matches": "[rel~=nofollow]" } }
+              ]
+            },
+            "eagerness": "conservative"
+          }
+        ]
+      }
+    </script>
+
     {{mochi.head}} {{mochi.css}}
   </head>
   <body>
