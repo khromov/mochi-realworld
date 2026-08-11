@@ -1,4 +1,4 @@
-import type { Handle } from 'mochi-framework';
+import type { Handle, HandleError } from 'mochi-framework';
 import { decodeSession, SESSION_COOKIE } from './lib/session';
 
 /** Read one cookie straight off the request headers. */
@@ -66,4 +66,31 @@ export const guards: Handle = ({ event, resolve }) => {
   }
 
   return resolve(event);
+};
+
+/**
+ * The upstream API wipes accounts periodically, so a stored session cookie routinely outlives the
+ * token inside it. `api.ts` raises a 401 when an authenticated call is rejected; drop the dead cookie
+ * rather than leaving the user half-signed-in, where every authenticated page 500s.
+ *
+ * On a GET, re-request the same URL so the page simply renders signed out. Anything else is a form
+ * submission, so return a message the error page can show — the next GET clears the cookie.
+ */
+export const handleError: HandleError = ({ status, event }) => {
+  if (status !== 401) {
+    return;
+  }
+
+  const { method } = event.request;
+  if (method !== 'GET' && method !== 'HEAD') {
+    return { status, message: 'Your session has expired — please sign in again.' };
+  }
+
+  return new Response(null, {
+    status: 303,
+    headers: {
+      location: `${event.url.pathname}${event.url.search}`,
+      'set-cookie': `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
+    },
+  });
 };

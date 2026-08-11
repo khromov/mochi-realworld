@@ -126,6 +126,13 @@ Upstream bugs fixed along the way:
 The reference's own quirks are preserved: profile pages render no pagination (its `get_articles`
 returns `pages` while both callers destructure `page`), and `/profile/@bob` keeps the literal `@`.
 
+- **An expired session broke every authenticated page.** The upstream API wipes accounts
+  periodically, so a stored cookie routinely outlives the token inside it. The reference has no
+  handling for this: the API answers `401 { errors: { token: [...] } }`, that body reaches the caller
+  in place of the expected `{ articles }` / `{ article }`, and destructuring it throws. A `handleError`
+  hook now drops the dead cookie — re-requesting the same URL on a GET so the page renders signed out,
+  and showing "your session has expired" on a form submit. `?tab=feed` also falls back to the global
+  feed when signed out, since the auth-only endpoint returns no `articles` key.
 - **Avatars were broken for anyone without a profile picture.** The API returns `image: null` for
   users who never set one, and the reference renders `src={author.image}` directly in four of the
   five places it shows an avatar — only `CommentInput` uses the `placeholder` constant it exports.

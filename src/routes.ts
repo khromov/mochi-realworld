@@ -61,7 +61,11 @@ export const routes: Record<string, MochiRouteValue> = {
       const tag = url.searchParams.get('tag');
       const page = Number(url.searchParams.get('page') ?? '1');
 
-      const endpoint = tab === 'feed' ? 'articles/feed' : 'articles';
+      // `articles/feed` is auth-only, and the "Your Feed" pill is not rendered when signed out — but
+      // the URL is reachable directly, and calling it anonymously returns an error body with no
+      // `articles` key, which then blows up on destructuring.
+      const token = currentUser()?.token;
+      const endpoint = tab === 'feed' && token ? 'articles/feed' : 'articles';
 
       const q = new URLSearchParams();
       q.set('limit', String(page_size));
@@ -70,7 +74,6 @@ export const routes: Record<string, MochiRouteValue> = {
         q.set('tag', tag);
       }
 
-      const token = currentUser()?.token;
       const [{ articles, articlesCount }, { tags }] = await Promise.all([
         api.get<ArticlesResponse>(`${endpoint}?${q}`, token),
         api.get<{ tags: string[] }>('tags'),

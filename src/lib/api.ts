@@ -16,10 +16,18 @@ interface SendOptions {
  * callers want that body rather than an exception, so 422 is treated as a success here. Any other
  * non-ok status becomes an HTTP error and renders the error page.
  *
- * 401 is included alongside it, which the reference omits. A wrong password answers
- * `401 { errors: { credentials: ['invalid'] } }`, so upstream it throws to the error page and the
- * `if (body.errors)` branch in the login action is unreachable. Letting 401 bodies through is what
- * makes inline credential errors work.
+ * 401 is included alongside it, which the reference omits, but only when the request carried no
+ * token. The two 401s mean different things:
+ *
+ *   - **No token sent** — a sign-in attempt failed: `401 { errors: { credentials: ['invalid'] } }`.
+ *     Return it so the form can render the message inline. (Upstream this throws to the error page,
+ *     making the login action's `if (body.errors)` branch unreachable.)
+ *   - **Token sent** — the session is dead: `401 { errors: { token: ['is missing'] } }`. Returning
+ *     that as data hands callers a body with no `articles` / `article` key, which then blows up on
+ *     destructuring. It is an expired session, so raise it and let `handleError` clear the cookie.
+ *
+ * The upstream API wipes accounts periodically, so a stored cookie outliving its token is routine
+ * rather than exceptional.
  */
 async function send<T>({ method, path, data, token }: SendOptions): Promise<T> {
   const headers: Record<string, string> = {};
@@ -35,6 +43,11 @@ async function send<T>({ method, path, data, token }: SendOptions): Promise<T> {
   }
 
   const res = await fetch(`${base}/${path}`, opts);
+
+  if (res.status === 401 && token) {
+    error(401, 'Session expired');
+  }
+
   if (res.ok || res.status === 422 || res.status === 401) {
     const text = await res.text();
     return (text ? JSON.parse(text) : {}) as T;

@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { Server } from 'bun';
 import { Mochi, noCache, sequence } from 'mochi-framework';
-import { auth, guards } from './handle';
+import { auth, guards, handleError } from './handle';
 import { routes } from './routes';
 
 describe('realworld app', () => {
@@ -22,6 +22,7 @@ describe('realworld app', () => {
       errorPage: './src/Error.svelte',
       trailingSlash: 'never',
       handle: sequence(auth, guards, noCache),
+      handleError,
       routes,
     });
     base = `http://localhost:${server.port}`;
@@ -82,6 +83,29 @@ describe('realworld app', () => {
     expect(html).toContain('Sign In');
     expect(html).toContain('name="email"');
     expect(html).toContain('navbar-brand');
+  });
+
+  // The upstream API wipes accounts periodically, so a stored cookie outliving its token is routine.
+  test('an expired session is cleared rather than 500ing', async () => {
+    const dead = btoa(
+      JSON.stringify({ email: 'x@example.com', token: 'token_dead', username: 'ghost' }),
+    );
+
+    // `articles/feed` is auth-only, so a dead token is rejected there.
+    const res = await fetch(`${base}/?tab=feed`, {
+      headers: { cookie: `jwt=${dead}` },
+      redirect: 'manual',
+    });
+
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe('/?tab=feed');
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+  });
+
+  test('?tab=feed signed out falls back to the global feed', async () => {
+    const res = await fetch(`${base}/?tab=feed`);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('Global Feed');
   });
 
   // Hits the live RealWorld API, which this app is a client for.
