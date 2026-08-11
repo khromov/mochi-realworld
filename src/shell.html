@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      Second layer behind public/robots.txt, for crawlers that ignore it. Note the two only overlap
+      partially: a bot obeying `Disallow: /` never fetches the page, so it never sees this tag.
+    -->
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
 

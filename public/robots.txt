@@ -1,3 +1,4 @@
-# allow crawling everything by default
+# This is a framework port demo, not the canonical RealWorld app, and every page render costs calls
+# to the shared public API at api.realworld.show. Keep crawlers off it entirely.
 User-agent: *
-Disallow:
+Disallow: /
