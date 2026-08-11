@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { placeholder } from './constants';
   import FollowButton from './FollowButton.svelte';
   import type { Profile, PublicUser } from './types';
 
@@ -27,7 +28,7 @@
     <div class="container">
       <div class="row">
         <div class="col-xs-12 col-md-10 offset-md-1">
-          <img src={profile.image} class="user-img" alt={profile.username} />
+          <img src={profile.image || placeholder} class="user-img" alt={profile.username} />
           <h4>{profile.username}</h4>
           {#if profile.bio}
             <p>{profile.bio}</p>

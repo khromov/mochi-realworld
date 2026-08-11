@@ -5,6 +5,9 @@
     "": {
       "name": "mochi-realworld",
       "dependencies": {
+        "@fontsource/source-sans-pro": "^5.3.0",
+        "@fontsource/source-serif-pro": "^5.3.0",
+        "@fontsource/titillium-web": "^5.3.0",
         "marked": "^18.0.9",
         "mochi-framework": "^0.9.1",
         "sanitize-html": "^2.17.6",
@@ -26,6 +29,12 @@
   },
   "packages": {
     "@css-inline/css-inline-wasm": ["@css-inline/css-inline-wasm@0.21.1", "", {}, "sha512-i4J39WFIRF26TCnb+rCvdfHZCmuMXuaKjxrK0hohySxXRybREiZWT6LbOyRseubmRa2lj97tHeC9w2A80pM9KQ=="],
+
+    "@fontsource/source-sans-pro": ["@fontsource/source-sans-pro@5.3.0", "", {}, "sha512-nd96qXI4stbyRPNEygS2cNhMkAc1kkW9+ORmIOK0oelPTyiitRPk/+9+HUuUYuEjwRRkK/+Gat2J9/NMJest/A=="],
+
+    "@fontsource/source-serif-pro": ["@fontsource/source-serif-pro@5.3.0", "", {}, "sha512-YFHaHYBYSgjh2TFvK6r5Rj1B+BQ3GW3VTlS/FyWT5K44OlJTNU2kGjVh66c2nUqIUxPtgJEt+JJNMMaMShtM+A=="],
+
+    "@fontsource/titillium-web": ["@fontsource/titillium-web@5.3.0", "", {}, "sha512-+nO3ACtHoBgBgq5rzKYImyJqcbRR5cG7D5O73Iu9qMEVlpQ4KVpdDs+XJexZ6Tgcek4xSlkCI82Xd3yLNF++6w=="],
 
     "@joint-ops/hitlimit-bun": ["@joint-ops/hitlimit-bun@1.5.0", "", { "dependencies": { "@joint-ops/hitlimit-types": "1.5.0" }, "peerDependencies": { "elysia": ">=1.0.0", "hono": ">=4.0.0", "ioredis": ">=5.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0" }, "optionalPeers": ["elysia", "hono", "ioredis", "mongodb", "mysql2", "pg"] }, "sha512-lXssGDzHmSKG9qU/3DFxF2olFlmGHwPFXP+tIN8wXBFwHN6/Fo1RKD01DL4jQMy1j1wgEU7+Uli62CH2HX141A=="],
 

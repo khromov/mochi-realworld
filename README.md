@@ -75,7 +75,8 @@ that need no client-side router and ship no JavaScript:
   identical copy of itself just reads as a flicker. The article banner is deliberately left animating,
   because its `<h1>` is the page's actual content. This is hand-written CSS in `src/shell.html` rather
   than the component's `keepElementSelectors`, which paints both snapshots at once and visibly darkens
-  a transparent element. The error page opts out entirely. Both reasons are in `HARD_EDGES.md`.
+  a transparent element. The error page opts out entirely, because `<ViewTransitions>` reads the
+  request context and the unmatched-route path renders without one.
 - **Speculation Rules.** `src/shell.html` carries a `<script type="speculationrules">` block using
   document rules, so the browser speculatively loads whatever link the user is about to click with no
   per-page bookkeeping. `prefetch` is `moderate` (on hover) across all same-origin links except
@@ -125,8 +126,24 @@ Upstream bugs fixed along the way:
 The reference's own quirks are preserved: profile pages render no pagination (its `get_articles`
 returns `pages` while both callers destructure `page`), and `/profile/@bob` keeps the literal `@`.
 
-The Bootstrap theme is vendored to `public/main.css`. The reference links
-`//demo.productionready.io/main.css`, which now 404s — the upstream demo is unstyled because of it.
+- **Avatars were broken for anyone without a profile picture.** The API returns `image: null` for
+  users who never set one, and the reference renders `src={author.image}` directly in four of the
+  five places it shows an avatar — only `CommentInput` uses the `placeholder` constant it exports.
+  All five use the fallback now.
+
+**Nothing is loaded from a third party.** The reference pulls its stylesheet, icon font, Google Fonts
+and avatar placeholder from four external hosts, two of which are dead:
+
+| Asset | Reference | Here |
+| --- | --- | --- |
+| Bootstrap theme | `//demo.productionready.io/main.css` — **404** | `public/main.css` |
+| Avatar placeholder | `static.productionready.io/…/smiley-cyrus.jpg` — **404** | `public/smiley-cyrus.jpeg` |
+| Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | `public/ionicons/` |
+| Fonts | `//fonts.googleapis.com/css?family=…` | `@fontsource`, imported from `src/lib/fonts.ts` |
+
+The fonts are trimmed against what the reference's Google Fonts URL requested: Merriweather Sans is
+dropped (it was in the URL but the theme never references it), as are the four italic variants — see
+`FONT_ISSUE.md` for why that trim was necessary and what it costs.
 
 Crawlers are blocked, where the reference explicitly allowed them (its `robots.txt` is `Disallow:`
 with an empty value). This is a framework-port demo rather than the canonical RealWorld app, and

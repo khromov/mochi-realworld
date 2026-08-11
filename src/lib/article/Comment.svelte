@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from 'mochi-framework';
   import type { MochiSubmitFunction } from 'mochi-framework';
+  import { placeholder } from '../constants';
   import type { Comment, PublicUser } from '../types';
 
   const {
@@ -25,7 +26,11 @@
 
   <div class="card-footer">
     <a href="/profile/@{comment.author.username}" class="comment-author">
-      <img src={comment.author.image} class="comment-author-img" alt={comment.author.username} />
+      <img
+        src={comment.author.image || placeholder}
+        class="comment-author-img"
+        alt={comment.author.username}
+      />
     </a>
 
     <a href="/profile/@{comment.author.username}" class="comment-author">

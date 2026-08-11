@@ -3,67 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!--
-      Second layer behind public/robots.txt, for crawlers that ignore it. Note the two only overlap
-      partially: a bot obeying `Disallow: /` never fetches the page, so it never sees this tag.
-    -->
     <meta name="robots" content="noindex, nofollow" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
 
-    <!-- Import Ionicon icons & Google Fonts our Bootstrap theme relies on -->
-    <link
-      href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"
-      rel="stylesheet"
-      type="text/css"
-    />
-    <link
-      href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic"
-      rel="stylesheet"
-      type="text/css"
-    />
-    <!--
-      The custom Bootstrap 4 theme. The reference app links //demo.productionready.io/main.css, but
-      that CDN now 404s (the upstream demo is unstyled because of it), so the original stylesheet is
-      vendored into public/ and served locally.
-    -->
+    <link rel="stylesheet" href="/ionicons/css/ionicons.min.css" type="text/css" />
     <link rel="stylesheet" href="/main.css" />
 
     <style>
-      /*
-        Always reserve the scrollbar gutter. RealWorld's `.container` is a fixed 1140px centred with
-        auto margins, so a page that scrolls and a page that doesn't differ in viewport width by the
-        scrollbar (~15px), sliding the navbar 7.5px sideways between routes. Harmless on its own, but
-        the cross-document view transition snapshots the navbar and the shift becomes a visible jump.
-      */
       html {
         scrollbar-gutter: stable;
       }
 
-      /*
-        Hold the navbar still across navigations. Done by hand rather than with the component's
-        `keepElementSelectors`, which emits `animation: none` on the group AND on both snapshots —
-        leaving the outgoing and incoming copies painted on top of each other at full opacity. The
-        RealWorld navbar has a transparent background (`.navbar-light` sets no background), so its
-        snapshot is just antialiased text; two stacked copies composite to 2a - a² coverage and the
-        text visibly darkens for the length of the transition.
-
-        Hiding the outgoing snapshot means exactly one copy paints. The incoming one is used, so the
-        active nav link updates at the start of the transition instead of animating.
-      */
       .navbar {
         view-transition-name: conduit-navbar;
       }
-
-      /*
-        Same treatment for headers that two pages render identically: the green home banner (shared by
-        every /?tab= and /?tag= view) and the profile header (shared by a profile's Articles and
-        Favorites tabs). Crossfading a header against an identical copy of itself just reads as a
-        flicker.
-
-        Each gets its own name so it only ever pairs with itself. The article banner is deliberately
-        left unnamed — its <h1> is the page's actual content, so it should animate.
-      */
       .home-page .banner {
         view-transition-name: conduit-home-banner;
       }
@@ -87,16 +41,6 @@
         animation: none;
       }
 
-      /*
-        …but only freeze when the header is on BOTH sides of the navigation. `:only-child` means there
-        is no counterpart snapshot, i.e. the header exists on just one side — going article → home the
-        green banner is only on the incoming page. Freezing that case removes its entry animation, so
-        it snaps into place while the rest of the page crossfades.
-
-        Written as an override rather than guarding the rules above with `:not(:only-child)`: Chrome
-        parses that (`CSS.supports` says yes) but it never matches, which silently disables the freeze
-        in both directions. Only the bare `:only-child` works, so the fade is restored explicitly.
-      */
       @keyframes conduit-vt-fade-out {
         to {
           opacity: 0;

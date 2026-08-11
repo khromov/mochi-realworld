@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { placeholder } from '../constants';
   import type { Article, PublicUser } from '../types';
   import FavoriteButton from './FavoriteButton.svelte';
 
@@ -9,7 +10,7 @@
 <div class="article-preview">
   <div class="article-meta">
     <a href="/profile/@{article.author.username}">
-      <img src={article.author.image} alt={article.author.username} />
+      <img src={article.author.image || placeholder} alt={article.author.username} />
     </a>
 
     <div class="info">
