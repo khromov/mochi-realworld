@@ -84,18 +84,6 @@
       }
     </style>
 
-    {{mochi.head}} {{mochi.css}}
-  </head>
-  <body>
-    {{mochi.body}} {{mochi.script}}
-    <!--
-      Speculation Rules: the browser speculatively loads the link the user is about to click, so a
-      full page load lands instantly. Document rules (`where` + `eagerness`) mean no per-page
-      bookkeeping — they follow whatever links are on the page. Inert in browsers without support.
-
-      Every mutation in this app is a POST, and speculation only ever issues GETs from <a href>, so
-      nothing here can trigger a side effect. `href_matches: "/*"` is same-origin only.
-    -->
     <script type="speculationrules">
       {
         "prefetch": [
@@ -131,5 +119,10 @@
         ]
       }
     </script>
+
+    {{mochi.head}} {{mochi.css}}
+  </head>
+  <body>
+    {{mochi.body}} {{mochi.script}}
   </body>
 </html>
