@@ -246,7 +246,65 @@ invented for it. A default derived from the status text would remove a small pap
 
 ---
 
-## 9. Docs suggestion: view transitions make scrollbar-driven layout shift visible
+## 9. `keepElementSelectors` paints both snapshots, so transparent elements darken
+
+**Severity: medium.** Visible on every navigation, and the cause is not guessable from the symptom.
+
+`keepElementSelectors={['.navbar']}` emits:
+
+```css
+.navbar { view-transition-name: mochi-vt-keep-navbar; }
+::view-transition-group(mochi-vt-keep-navbar),
+::view-transition-old(mochi-vt-keep-navbar),
+::view-transition-new(mochi-vt-keep-navbar) { animation: none; }
+```
+
+Killing the animation on the **group** is right — that's what holds the element still. Killing it on
+**old** and **new** is where it goes wrong, and for a reason that is easy to miss: in Chromium the UA
+drives *two* animations on those pseudo-elements. Read during a live transition:
+
+```
+animationName: "-ua-view-transition-fade-out, -ua-mix-blend-mode-plus-lighter"
+```
+
+`animation: none` disables both. Losing `-ua-view-transition-fade-out` is intended. Losing
+`-ua-mix-blend-mode-plus-lighter` is not — `plus-lighter` is what makes two stacked snapshots
+composite back to the original image. Without it, both snapshots paint at `opacity: 1` with normal
+blending, and two copies of the same partially transparent pixel composite to `2a - a²` coverage
+(0.5 → 0.75).
+
+**Symptom:** any kept element that isn't fully opaque renders visibly darker and heavier for the
+duration of every transition. RealWorld's `.navbar` has no background at all (`.navbar-light` sets
+only link colours; computed `background-color` is `rgba(0, 0, 0, 0)`), so its snapshot is just
+antialiased text — and the whole menu thickens and darkens on each navigation. That reads as a
+rendering glitch, with nothing pointing at `keepElementSelectors` as the cause.
+
+**Confirmation that this is a real gap:** the framework's own view-transitions demo hits the same
+wall and works around it by hand, hiding one of the two snapshots rather than relying on
+`keepElementSelectors`:
+
+```css
+:global(::view-transition-new(mochi-vt-video)) { animation: none; opacity: 0; }
+```
+
+**What we shipped instead** — the component sets up the name, but the freeze is hand-written so
+exactly one snapshot paints:
+
+```css
+.navbar { view-transition-name: conduit-navbar; }
+::view-transition-group(conduit-navbar) { animation: none; }
+::view-transition-old(conduit-navbar) { display: none; }  /* the missing piece */
+::view-transition-new(conduit-navbar) { animation: none; }
+```
+
+**Suggested fix:** have `keepElementSelectors` emit `display: none` on the outgoing snapshot and drop
+`animation: none` from the two image pseudos, keeping it only on the group. Showing the incoming
+snapshot is also better semantics for persistent chrome — an active nav link should update at the
+start of the navigation, not animate.
+
+---
+
+## 10. Docs suggestion: view transitions make scrollbar-driven layout shift visible
 
 **Not a bug — a one-line addition to the View Transitions page that would save people time.**
 

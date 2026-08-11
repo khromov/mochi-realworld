@@ -34,6 +34,30 @@
       html {
         scrollbar-gutter: stable;
       }
+
+      /*
+        Hold the navbar still across navigations. Done by hand rather than with the component's
+        `keepElementSelectors`, which emits `animation: none` on the group AND on both snapshots —
+        leaving the outgoing and incoming copies painted on top of each other at full opacity. The
+        RealWorld navbar has a transparent background (`.navbar-light` sets no background), so its
+        snapshot is just antialiased text; two stacked copies composite to 2a - a² coverage and the
+        text visibly darkens for the length of the transition.
+
+        Hiding the outgoing snapshot means exactly one copy paints. The incoming one is used, so the
+        active nav link updates at the start of the transition instead of animating.
+      */
+      .navbar {
+        view-transition-name: conduit-navbar;
+      }
+      ::view-transition-group(conduit-navbar) {
+        animation: none;
+      }
+      ::view-transition-old(conduit-navbar) {
+        display: none;
+      }
+      ::view-transition-new(conduit-navbar) {
+        animation: none;
+      }
     </style>
 
     {{mochi.head}} {{mochi.css}}

@@ -24,12 +24,15 @@
   — both the page you leave and the page you land on must opt in. Ships zero JavaScript; the browser
   does the animating. The navbar is held still so only the content crossfades.
 
+  The navbar is held still by hand-written CSS in shell.html rather than `keepElementSelectors`, which
+  paints both snapshots at once and darkens the transparent navbar. See HARD_EDGES.md.
+
   Opted out of on the error page: <ViewTransitions> reads getRequestContext().locals to enforce its
   one-per-page rule, and the unmatched-route path renders the error page without a request context, so
   including it there takes the 404 page down. See HARD_EDGES.md.
 -->
 {#if viewTransitions}
-  <ViewTransitions type="fade" duration={180} keepElementSelectors={['.navbar']} />
+  <ViewTransitions type="fade" duration={180} />
 {/if}
 
 <Nav {user} {pathname} />

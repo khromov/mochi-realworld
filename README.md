@@ -69,8 +69,9 @@ that need no client-side router and ship no JavaScript:
 
 - **View Transitions.** `<ViewTransitions type="fade" />` in `src/lib/Layout.svelte` opts every page
   into the cross-document [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API),
-  so navigations crossfade. The navbar is passed to `keepElementSelectors` to hold it still while the
-  content transitions. The error page opts out — see `HARD_EDGES.md` for why.
+  so navigations crossfade. The navbar is held still by hand-written CSS in `src/shell.html` rather
+  than the component's `keepElementSelectors`, which paints both snapshots at once and visibly darkens
+  a transparent element. The error page opts out entirely. Both reasons are in `HARD_EDGES.md`.
 - **Speculation Rules.** `src/shell.html` carries a `<script type="speculationrules">` block using
   document rules, so the browser speculatively loads whatever link the user is about to click with no
   per-page bookkeeping. `prefetch` is `moderate` (on hover) across all same-origin links except
