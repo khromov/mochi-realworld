@@ -56,9 +56,8 @@
         Favorites tabs). Crossfading a header against an identical copy of itself just reads as a
         flicker.
 
-        Each gets its own name so it only ever pairs with itself. Navigating somewhere without that
-        header leaves it unpaired, and it fades normally. The article banner is deliberately left
-        unnamed — its <h1> is the page's actual content, so it should animate.
+        Each gets its own name so it only ever pairs with itself. The article banner is deliberately
+        left unnamed — its <h1> is the page's actual content, so it should animate.
       */
       .home-page .banner {
         view-transition-name: conduit-home-banner;
@@ -81,6 +80,39 @@
       ::view-transition-new(conduit-home-banner),
       ::view-transition-new(conduit-profile-header) {
         animation: none;
+      }
+
+      /*
+        …but only freeze when the header is on BOTH sides of the navigation. `:only-child` means there
+        is no counterpart snapshot, i.e. the header exists on just one side — going article → home the
+        green banner is only on the incoming page. Freezing that case removes its entry animation, so
+        it snaps into place while the rest of the page crossfades.
+
+        Written as an override rather than guarding the rules above with `:not(:only-child)`: Chrome
+        parses that (`CSS.supports` says yes) but it never matches, which silently disables the freeze
+        in both directions. Only the bare `:only-child` works, so the fade is restored explicitly.
+      */
+      @keyframes conduit-vt-fade-out {
+        to {
+          opacity: 0;
+        }
+      }
+      @keyframes conduit-vt-fade-in {
+        from {
+          opacity: 0;
+        }
+      }
+
+      ::view-transition-old(conduit-navbar):only-child,
+      ::view-transition-old(conduit-home-banner):only-child,
+      ::view-transition-old(conduit-profile-header):only-child {
+        display: block;
+        animation: conduit-vt-fade-out 180ms ease both;
+      }
+      ::view-transition-new(conduit-navbar):only-child,
+      ::view-transition-new(conduit-home-banner):only-child,
+      ::view-transition-new(conduit-profile-header):only-child {
+        animation: conduit-vt-fade-in 180ms ease both;
       }
     </style>
 
