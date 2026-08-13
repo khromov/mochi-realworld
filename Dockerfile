@@ -3,6 +3,8 @@ WORKDIR /app
 
 COPY package.json bun.lock* ./
 COPY patches ./patches
+# mochi-framework is a file: dep on the vendor/ submodule, so it must exist before install resolves.
+COPY vendor/mochi/packages/mochi ./vendor/mochi/packages/mochi
 RUN bun install --production
 
 COPY . .

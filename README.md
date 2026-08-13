@@ -12,6 +12,27 @@ hydration).
 
 ## Running locally
 
+`mochi-framework` is pinned to an unreleased commit, vendored as a git submodule under `vendor/mochi`
+and referenced with `"mochi-framework": "file:./vendor/mochi/packages/mochi"`. Clone with submodules,
+or the install will fail with an unresolvable `file:` dependency:
+
+```sh
+git clone --recurse-submodules https://github.com/khromov/mochi-realworld.git
+# already cloned?
+git submodule update --init --depth 1
+```
+
+The framework ships TypeScript source with no build step, so nothing needs compiling in `vendor/`.
+To move to a different commit, check it out inside the submodule and commit the new pointer:
+
+```sh
+git -C vendor/mochi fetch --depth 1 origin <sha> && git -C vendor/mochi checkout <sha>
+bun install
+```
+
+When the version this pins is published to npm, drop the submodule and go back to a normal
+`"mochi-framework": "^x.y.z"` range.
+
 ```sh
 bun install
 bun run dev      # http://localhost:3333

@@ -1,0 +1,3 @@
+[submodule "vendor/mochi"]
+	path = vendor/mochi
+	url = https://github.com/khromov/mochi.git
