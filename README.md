@@ -173,21 +173,27 @@ and avatar placeholder from four external hosts, two of which are dead:
 | Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | `public/ionicons/` |
 | Fonts | `//fonts.googleapis.com/css?family=…` | `@fontsource`, imported from `src/lib/fonts.ts` |
 
-Fonts are emitted as separate, content-hashed `.woff2` assets rather than inlined into the bundled
-CSS, and legacy `woff` sources are dropped where `woff2` is offered:
+`src/lib/fonts.ts` declares **exactly the 13 faces** the reference's Google Fonts URL requests —
+Titillium Web 700, Source Serif Pro 400/700, Merriweather Sans 400/700, and Source Sans Pro
+300/400/600/700 plus all four italics. Same families, same weights, same italics, self-hosted.
 
-| | |
-| --- | --- |
-| bundled CSS, all of it | **5.70 kB** (1.83 kB of that `@fontsource` `@font-face` blocks) |
-| fonts | 112.9 kB across 7 `.woff2` |
-| legacy `.woff` duplicates | none |
+`fonts: { preload: false }` on `Mochi.serve()` is what makes that parity hold at request time. Mochi
+otherwise emits `<link rel="preload">` for extracted faces up to a hard cap of 8 per page
+(`FONT_PRELOAD_MAX`, not configurable — `fonts.preload` is only on/off). With 13 faces that fetches 8
+eagerly where the reference fetches only what it renders, and the cap picks badly, dropping Source
+Sans 400 — the body face — in favour of italics. Preloading off, the browser fetches on use, which is
+what a Google Fonts `<link>` does.
 
-Two weights are left out of what the reference's Google Fonts URL requested. Merriweather Sans,
-because nothing in the theme references it. The four italics, because Mochi emits
-`<link rel="preload">` for extracted faces up to a hard cap of 8 per page (`FONT_PRELOAD_MAX`, not
-configurable — `fonts.preload` is only on/off): carrying the italics pushed past the cap and displaced
-Source Sans 400, the body face, in favour of italics the theme barely uses. At seven faces everything
-the theme actually uses preloads.
+Measured against a reconstruction of the reference (same markup and `main.css`, Google Fonts `<link>`
+swapped in), the two download an identical set:
+
+| | reference | here |
+| --- | --- | --- |
+| faces declared | 13 | 13 |
+| downloaded on `/` | 4 | 4 |
+| downloaded on `/article/:slug` | 5 | 5 |
+| bundled CSS | 14.6 kB | **7.30 kB** |
+| legacy `.woff` duplicates | n/a | none |
 
 Crawlers are blocked, where the reference explicitly allowed them (its `robots.txt` is `Disallow:`
 with an empty value). This is a framework-port demo rather than the canonical RealWorld app, and
