@@ -122,8 +122,20 @@ brotli / 2,505 gzip.
 
 It does **not** cover `public/`. Mochi registers those files straight into Bun's route table as
 `Bun.file(diskPath)`, so they never enter the middleware chain and there is no option to opt them in.
-`conduit-theme.css` is therefore served at its full 28.8 kB where compression would make it 5.2 kB —
-the largest thing this app serves, and the one thing that cannot be compressed.
+Which is why the theme is not in `public/`: it lives at `src/lib/conduit-theme.css` and is pulled in
+with a side-effect `import` from `Layout.svelte`, so the bundler owns it and the middleware can reach
+it. Bun minifies it on the way through, and the result compresses:
+
+| | bytes |
+| --- | --- |
+| source file | 28,850 |
+| bundled (minified) | 22,755 |
+| served, gzip | 4,196 |
+| served, brotli | **4,461** |
+
+Roughly an 85% saving against serving it from `public/`, for a one-line import. What remains in
+`public/` is only what has to be at a fixed URL — `favicon.ico`, `manifest.json`, `robots.txt`,
+`logo-256.png`, and the avatar placeholder.
 
 ## Deviations from the reference
 
@@ -177,7 +189,7 @@ Assets follow the reference, except where the URL it uses is dead:
 
 | Asset | Reference | Here |
 | --- | --- | --- |
-| Theme | `/conduit-theme.css`, self-hosted | `public/conduit-theme.css`, the same file |
+| Theme | `/conduit-theme.css`, self-hosted | the same file, bundled from `src/lib/conduit-theme.css` |
 | Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | same CDN |
 | Avatar placeholder | `static.productionready.io/…/smiley-cyrus.jpg` — **404** | `public/smiley-cyrus.jpeg` |
 | Fonts | `//fonts.googleapis.com/css?family=…` | `@fontsource`, imported from `src/lib/fonts.ts` |

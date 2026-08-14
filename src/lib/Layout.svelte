@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { ViewTransitions } from 'mochi-framework/components';
+  import './conduit-theme.css';
   import './fonts';
   import Nav from './Nav.svelte';
   import type { PublicUser } from './types';
