@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { Server } from 'bun';
-import { Mochi, noCache, sequence } from 'mochi-framework';
+import { Mochi, compress, noCache, sequence } from 'mochi-framework';
 import { auth, guards, handleError } from './handle';
 import { routes } from './routes';
 import { speculationRules } from './speculationRules';
@@ -23,7 +23,7 @@ describe('realworld app', () => {
       errorPage: './src/Error.svelte',
       trailingSlash: 'never',
       speculationRules,
-      handle: sequence(auth, guards, noCache),
+      handle: sequence(auth, guards, noCache, compress()),
       handleError,
       routes,
     });

@@ -115,6 +115,17 @@ Every mutation in the app is a POST, and speculation only ever issues GETs from 
 rule here can trigger a side effect. Because every page varies by the session cookie, `noCache` is in
 the middleware chain so responses revalidate rather than being served from a heuristic cache.
 
+The chain ends in `compress()`, innermost so it sees the body the rest of it produced. It negotiates
+brotli or gzip from `Accept-Encoding` and is a no-op under `development`, since the debug bar injects
+itself into the HTML after the response is built. Measured on `/` in production: 10,416 bytes → 2,419
+brotli / 2,505 gzip.
+
+It does **not** cover `public/`. Mochi registers those files straight into Bun's route table as
+`Bun.file(diskPath)`, so they never enter the middleware chain and there is no option to opt them in.
+`conduit-theme.css` is therefore served at its full 28.8 kB where compression would make it 5.2 kB —
+the largest thing this app serves, and the one thing that cannot be compressed. Written up for the
+maintainers in `FEATURE_REQUEST.md`.
+
 ## Deviations from the reference
 
 Forced by the framework:
@@ -163,15 +174,25 @@ returns `pages` while both callers destructure `page`), and `/profile/@bob` keep
   five places it shows an avatar — only `CommentInput` uses the `placeholder` constant it exports.
   All five use the fallback now.
 
-**Nothing is loaded from a third party.** The reference pulls its stylesheet, icon font, Google Fonts
-and avatar placeholder from four external hosts, two of which are dead:
+Assets follow the reference, except where the URL it uses is dead:
 
 | Asset | Reference | Here |
 | --- | --- | --- |
-| Bootstrap theme | `//demo.productionready.io/main.css` — **404** | `public/main.css` |
+| Theme | `/conduit-theme.css`, self-hosted | `public/conduit-theme.css`, the same file |
+| Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | same CDN |
 | Avatar placeholder | `static.productionready.io/…/smiley-cyrus.jpg` — **404** | `public/smiley-cyrus.jpeg` |
-| Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | `public/ionicons/` |
 | Fonts | `//fonts.googleapis.com/css?family=…` | `@fontsource`, imported from `src/lib/fonts.ts` |
+
+The theme is worth a note. The reference used to link `//demo.productionready.io/main.css`, which now
+404s. It has since replaced that with a self-hosted `conduit-theme.css`, hand-reduced to "only …
+classes actually used in this codebase" — **28.8 kB against the 104.9 kB** of the original
+Bootstrap-based file. This app serves that same file, and renders the same as the live reference does
+today: no green banner, outlined rather than filled tag pills.
+
+That is a real change in look, not a regression here — the reference redesigned when its CDN died.
+One difference remains: the reference has since swapped its text wordmark for an SVG logo, where this
+port still renders `conduit` as text. That is app-source drift past commit `ec8552f`, which is what
+this port targets.
 
 `src/lib/fonts.ts` declares **exactly the 13 faces** the reference's Google Fonts URL requests —
 Titillium Web 700, Source Serif Pro 400/700, Merriweather Sans 400/700, and Source Sans Pro
@@ -184,7 +205,7 @@ eagerly where the reference fetches only what it renders, and the cap picks badl
 Sans 400 — the body face — in favour of italics. Preloading off, the browser fetches on use, which is
 what a Google Fonts `<link>` does.
 
-Measured against a reconstruction of the reference (same markup and `main.css`, Google Fonts `<link>`
+Measured against a reconstruction of the reference (same markup and theme, Google Fonts `<link>`
 swapped in), the two download an identical set:
 
 | | reference | here |
