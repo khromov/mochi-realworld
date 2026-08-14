@@ -27,7 +27,7 @@ To move to a different commit, check it out inside the submodule and commit the 
 
 ```sh
 git -C vendor/mochi fetch --depth 1 origin <sha> && git -C vendor/mochi checkout <sha>
-bun install
+rm -f bun.lock && bun install     # regenerate: see CLAUDE.md for why reusing it silently breaks
 ```
 
 When the version this pins is published to npm, drop the submodule and go back to a normal
@@ -129,13 +129,9 @@ it:
 | | bytes |
 | --- | --- |
 | source file | 28,850 |
-| bundled | 22,755 |
-| served, gzip | 4,196 |
-| served, brotli | **4,461** |
-
-The bundled file is *not* minified — Mochi passes `minify: true` when it builds component CSS and the
-client JS, but the imported-CSS build omits it, so the output keeps its formatting. Minifying would
-take it to 18,994 bytes, which is only ~200 bytes once gzip is applied.
+| bundled, minified | 18,994 |
+| served, brotli | 4,109 |
+| served, gzip | **3,977** |
 
 Roughly an 85% saving against serving it from `public/`, for a one-line import. What remains in
 `public/` is only what has to be at a fixed URL — `favicon.ico`, `manifest.json`, `robots.txt`,
