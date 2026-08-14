@@ -123,8 +123,7 @@ brotli / 2,505 gzip.
 It does **not** cover `public/`. Mochi registers those files straight into Bun's route table as
 `Bun.file(diskPath)`, so they never enter the middleware chain and there is no option to opt them in.
 `conduit-theme.css` is therefore served at its full 28.8 kB where compression would make it 5.2 kB —
-the largest thing this app serves, and the one thing that cannot be compressed. Written up for the
-maintainers in `FEATURE_REQUEST.md`.
+the largest thing this app serves, and the one thing that cannot be compressed.
 
 ## Deviations from the reference
 
