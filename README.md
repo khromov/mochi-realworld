@@ -124,14 +124,18 @@ It does **not** cover `public/`. Mochi registers those files straight into Bun's
 `Bun.file(diskPath)`, so they never enter the middleware chain and there is no option to opt them in.
 Which is why the theme is not in `public/`: it lives at `src/lib/conduit-theme.css` and is pulled in
 with a side-effect `import` from `Layout.svelte`, so the bundler owns it and the middleware can reach
-it. Bun minifies it on the way through, and the result compresses:
+it:
 
 | | bytes |
 | --- | --- |
 | source file | 28,850 |
-| bundled (minified) | 22,755 |
+| bundled | 22,755 |
 | served, gzip | 4,196 |
 | served, brotli | **4,461** |
+
+The bundled file is *not* minified — Mochi passes `minify: true` when it builds component CSS and the
+client JS, but the imported-CSS build omits it, so the output keeps its formatting. Minifying would
+take it to 18,994 bytes, which is only ~200 bytes once gzip is applied.
 
 Roughly an 85% saving against serving it from `public/`, for a one-line import. What remains in
 `public/` is only what has to be at a fixed URL — `favicon.ico`, `manifest.json`, `robots.txt`,
