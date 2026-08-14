@@ -1,6 +1,7 @@
 import { Mochi, noCache, sequence, silenceInternalRoutes } from 'mochi-framework';
 import { auth, guards, handleError } from './handle';
 import { routes } from './routes';
+import { speculationRules } from './speculationRules';
 
 const PORT = Number(process.env.PORT) || 3333;
 
@@ -10,8 +11,9 @@ await Mochi.serve({
   htmlShell: './src/shell.html',
   errorPage: './src/Error.svelte',
   trailingSlash: 'never',
+  speculationRules,
   // `noCache` is innermost so it sees the final response; every page varies by the session cookie, and
-  // the shell's speculation rules fetch pages ahead of a click.
+  // the speculation rules fetch pages ahead of a click.
   handle: sequence(auth, guards, noCache),
   handleError,
   filters: {

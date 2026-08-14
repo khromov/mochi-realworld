@@ -98,8 +98,9 @@ that need no client-side router and ship no JavaScript:
   than the component's `keepElementSelectors`, which paints both snapshots at once and visibly darkens
   a transparent element. The error page opts out entirely, because `<ViewTransitions>` reads the
   request context and the unmatched-route path renders without one.
-- **Speculation Rules.** `src/shell.html` carries a `<script type="speculationrules">` block using
-  document rules, so the browser speculatively loads whatever link the user is about to click with no
+- **Speculation Rules.** `src/speculationRules.ts` is passed to `Mochi.serve({ speculationRules })`,
+  which injects the `<script type="speculationrules">` block into every page's `<head>`. Document
+  rules mean the browser speculatively loads whatever link the user is about to click with no
   per-page bookkeeping. `prefetch` is `moderate` (on hover) across all same-origin links except
   `/_*`; `prerender` is `conservative` (on pointerdown) and scoped to the read-only reading surfaces
   — `/`, `/article/*`, `/profile/*`. Prerendering runs a page's `serverProps` for real, so keeping it
@@ -172,9 +173,21 @@ and avatar placeholder from four external hosts, two of which are dead:
 | Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | `public/ionicons/` |
 | Fonts | `//fonts.googleapis.com/css?family=…` | `@fontsource`, imported from `src/lib/fonts.ts` |
 
-The fonts are trimmed against what the reference's Google Fonts URL requested: Merriweather Sans is
-dropped (it was in the URL but the theme never references it), as are the four italic variants — see
-`FONT_ISSUE.md` for why that trim was necessary and what it costs.
+Fonts are emitted as separate, content-hashed `.woff2` assets rather than inlined into the bundled
+CSS, and legacy `woff` sources are dropped where `woff2` is offered:
+
+| | |
+| --- | --- |
+| bundled CSS, all of it | **5.70 kB** (1.83 kB of that `@fontsource` `@font-face` blocks) |
+| fonts | 112.9 kB across 7 `.woff2` |
+| legacy `.woff` duplicates | none |
+
+Two weights are left out of what the reference's Google Fonts URL requested. Merriweather Sans,
+because nothing in the theme references it. The four italics, because Mochi emits
+`<link rel="preload">` for extracted faces up to a hard cap of 8 per page (`FONT_PRELOAD_MAX`, not
+configurable — `fonts.preload` is only on/off): carrying the italics pushed past the cap and displaced
+Source Sans 400, the body face, in favour of italics the theme barely uses. At seven faces everything
+the theme actually uses preloads.
 
 Crawlers are blocked, where the reference explicitly allowed them (its `robots.txt` is `Disallow:`
 with an empty value). This is a framework-port demo rather than the canonical RealWorld app, and

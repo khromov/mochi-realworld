@@ -5,6 +5,7 @@ import type { Server } from 'bun';
 import { Mochi, noCache, sequence } from 'mochi-framework';
 import { auth, guards, handleError } from './handle';
 import { routes } from './routes';
+import { speculationRules } from './speculationRules';
 
 describe('realworld app', () => {
   let server: Server<undefined>;
@@ -21,6 +22,7 @@ describe('realworld app', () => {
       htmlShell: './src/shell.html',
       errorPage: './src/Error.svelte',
       trailingSlash: 'never',
+      speculationRules,
       handle: sequence(auth, guards, noCache),
       handleError,
       routes,

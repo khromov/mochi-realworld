@@ -1,3 +1,5 @@
 node_modules
 .mochi
+# Temp dirs from `bun test`; afterAll removes them unless a run crashes first.
+.mochi-realworld-test-*
 *.tsbuildinfo

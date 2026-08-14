@@ -65,42 +65,6 @@
       }
     </style>
 
-    <script type="speculationrules">
-      {
-        "prefetch": [
-          {
-            "where": {
-              "and": [
-                { "href_matches": "/*" },
-                { "not": { "href_matches": "/_*" } },
-                { "not": { "selector_matches": "[target=_blank]" } },
-                { "not": { "selector_matches": "[rel~=nofollow]" } }
-              ]
-            },
-            "eagerness": "moderate"
-          }
-        ],
-        "prerender": [
-          {
-            "where": {
-              "and": [
-                {
-                  "or": [
-                    { "href_matches": "/" },
-                    { "href_matches": "/article/*" },
-                    { "href_matches": "/profile/*" }
-                  ]
-                },
-                { "not": { "selector_matches": "[target=_blank]" } },
-                { "not": { "selector_matches": "[rel~=nofollow]" } }
-              ]
-            },
-            "eagerness": "conservative"
-          }
-        ]
-      }
-    </script>
-
     {{mochi.head}} {{mochi.css}}
   </head>
   <body>
