@@ -12,6 +12,27 @@ hydration).
 
 ## Running locally
 
+`mochi-framework` is pinned to an unreleased commit, vendored as a git submodule under `vendor/mochi`
+and referenced with `"mochi-framework": "file:./vendor/mochi/packages/mochi"`. Clone with submodules,
+or the install will fail with an unresolvable `file:` dependency:
+
+```sh
+git clone --recurse-submodules https://github.com/khromov/mochi-realworld.git
+# already cloned?
+git submodule update --init --depth 1
+```
+
+The framework ships TypeScript source with no build step, so nothing needs compiling in `vendor/`.
+To move to a different commit, check it out inside the submodule and commit the new pointer:
+
+```sh
+git -C vendor/mochi fetch --depth 1 origin <sha> && git -C vendor/mochi checkout <sha>
+bun install
+```
+
+When the version this pins is published to npm, drop the submodule and go back to a normal
+`"mochi-framework": "^x.y.z"` range.
+
 ```sh
 bun install
 bun run dev      # http://localhost:3333
@@ -77,8 +98,9 @@ that need no client-side router and ship no JavaScript:
   than the component's `keepElementSelectors`, which paints both snapshots at once and visibly darkens
   a transparent element. The error page opts out entirely, because `<ViewTransitions>` reads the
   request context and the unmatched-route path renders without one.
-- **Speculation Rules.** `src/shell.html` carries a `<script type="speculationrules">` block using
-  document rules, so the browser speculatively loads whatever link the user is about to click with no
+- **Speculation Rules.** `src/speculationRules.ts` is passed to `Mochi.serve({ speculationRules })`,
+  which injects the `<script type="speculationrules">` block into every page's `<head>`. Document
+  rules mean the browser speculatively loads whatever link the user is about to click with no
   per-page bookkeeping. `prefetch` is `moderate` (on hover) across all same-origin links except
   `/_*`; `prerender` is `conservative` (on pointerdown) and scoped to the read-only reading surfaces
   — `/`, `/article/*`, `/profile/*`. Prerendering runs a page's `serverProps` for real, so keeping it
@@ -92,6 +114,32 @@ plain navigation, but the view transition snapshots the navbar and turns it into
 Every mutation in the app is a POST, and speculation only ever issues GETs from `<a href>`, so no
 rule here can trigger a side effect. Because every page varies by the session cookie, `noCache` is in
 the middleware chain so responses revalidate rather than being served from a heuristic cache.
+
+The chain ends in `compress()`, innermost so it sees the body the rest of it produced. It negotiates
+brotli or gzip from `Accept-Encoding` and is a no-op under `development`, since the debug bar injects
+itself into the HTML after the response is built. Measured on `/` in production: 10,416 bytes → 2,419
+brotli / 2,505 gzip.
+
+It does **not** cover `public/`. Mochi registers those files straight into Bun's route table as
+`Bun.file(diskPath)`, so they never enter the middleware chain and there is no option to opt them in.
+Which is why the theme is not in `public/`: it lives at `src/lib/conduit-theme.css` and is pulled in
+with a side-effect `import` from `Layout.svelte`, so the bundler owns it and the middleware can reach
+it:
+
+| | bytes |
+| --- | --- |
+| source file | 28,850 |
+| bundled | 22,755 |
+| served, gzip | 4,196 |
+| served, brotli | **4,461** |
+
+The bundled file is *not* minified — Mochi passes `minify: true` when it builds component CSS and the
+client JS, but the imported-CSS build omits it, so the output keeps its formatting. Minifying would
+take it to 18,994 bytes, which is only ~200 bytes once gzip is applied.
+
+Roughly an 85% saving against serving it from `public/`, for a one-line import. What remains in
+`public/` is only what has to be at a fixed URL — `favicon.ico`, `manifest.json`, `robots.txt`,
+`logo-256.png`, and the avatar placeholder.
 
 ## Deviations from the reference
 
@@ -141,19 +189,47 @@ returns `pages` while both callers destructure `page`), and `/profile/@bob` keep
   five places it shows an avatar — only `CommentInput` uses the `placeholder` constant it exports.
   All five use the fallback now.
 
-**Nothing is loaded from a third party.** The reference pulls its stylesheet, icon font, Google Fonts
-and avatar placeholder from four external hosts, two of which are dead:
+Assets follow the reference, except where the URL it uses is dead:
 
 | Asset | Reference | Here |
 | --- | --- | --- |
-| Bootstrap theme | `//demo.productionready.io/main.css` — **404** | `public/main.css` |
+| Theme | `/conduit-theme.css`, self-hosted | the same file, bundled from `src/lib/conduit-theme.css` |
+| Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | same CDN |
 | Avatar placeholder | `static.productionready.io/…/smiley-cyrus.jpg` — **404** | `public/smiley-cyrus.jpeg` |
-| Ionicons | `//code.ionicframework.com/ionicons/2.0.1/…` | `public/ionicons/` |
 | Fonts | `//fonts.googleapis.com/css?family=…` | `@fontsource`, imported from `src/lib/fonts.ts` |
 
-The fonts are trimmed against what the reference's Google Fonts URL requested: Merriweather Sans is
-dropped (it was in the URL but the theme never references it), as are the four italic variants — see
-`FONT_ISSUE.md` for why that trim was necessary and what it costs.
+The theme is worth a note. The reference used to link `//demo.productionready.io/main.css`, which now
+404s. It has since replaced that with a self-hosted `conduit-theme.css`, hand-reduced to "only …
+classes actually used in this codebase" — **28.8 kB against the 104.9 kB** of the original
+Bootstrap-based file. This app serves that same file, and renders the same as the live reference does
+today: no green banner, outlined rather than filled tag pills.
+
+That is a real change in look, not a regression here — the reference redesigned when its CDN died.
+One difference remains: the reference has since swapped its text wordmark for an SVG logo, where this
+port still renders `conduit` as text. That is app-source drift past commit `ec8552f`, which is what
+this port targets.
+
+`src/lib/fonts.ts` declares **exactly the 13 faces** the reference's Google Fonts URL requests —
+Titillium Web 700, Source Serif Pro 400/700, Merriweather Sans 400/700, and Source Sans Pro
+300/400/600/700 plus all four italics. Same families, same weights, same italics, self-hosted.
+
+`fonts: { preload: false }` on `Mochi.serve()` is what makes that parity hold at request time. Mochi
+otherwise emits `<link rel="preload">` for extracted faces up to a hard cap of 8 per page
+(`FONT_PRELOAD_MAX`, not configurable — `fonts.preload` is only on/off). With 13 faces that fetches 8
+eagerly where the reference fetches only what it renders, and the cap picks badly, dropping Source
+Sans 400 — the body face — in favour of italics. Preloading off, the browser fetches on use, which is
+what a Google Fonts `<link>` does.
+
+Measured against a reconstruction of the reference (same markup and theme, Google Fonts `<link>`
+swapped in), the two download an identical set:
+
+| | reference | here |
+| --- | --- | --- |
+| faces declared | 13 | 13 |
+| downloaded on `/` | 4 | 4 |
+| downloaded on `/article/:slug` | 5 | 5 |
+| bundled CSS | 14.6 kB | **7.30 kB** |
+| legacy `.woff` duplicates | n/a | none |
 
 Crawlers are blocked, where the reference explicitly allowed them (its `robots.txt` is `Disallow:`
 with an empty value). This is a framework-port demo rather than the canonical RealWorld app, and

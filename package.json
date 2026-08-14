@@ -14,11 +14,12 @@
     "clean": "rimraf .mochi"
   },
   "dependencies": {
+    "@fontsource/merriweather-sans": "^5.3.0",
     "@fontsource/source-sans-pro": "^5.3.0",
     "@fontsource/source-serif-pro": "^5.3.0",
     "@fontsource/titillium-web": "^5.3.0",
     "marked": "^18.0.9",
-    "mochi-framework": "^0.9.1",
+    "mochi-framework": "file:./vendor/mochi/packages/mochi",
     "sanitize-html": "^2.17.6",
     "svelte": "^5.56.8"
   },

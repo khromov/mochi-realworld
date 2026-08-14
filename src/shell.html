@@ -7,8 +7,11 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
 
-    <link rel="stylesheet" href="/ionicons/css/ionicons.min.css" type="text/css" />
-    <link rel="stylesheet" href="/main.css" />
+    <link
+      href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
 
     <style>
       html {
@@ -64,42 +67,6 @@
         animation: conduit-vt-fade-in 180ms ease both;
       }
     </style>
-
-    <script type="speculationrules">
-      {
-        "prefetch": [
-          {
-            "where": {
-              "and": [
-                { "href_matches": "/*" },
-                { "not": { "href_matches": "/_*" } },
-                { "not": { "selector_matches": "[target=_blank]" } },
-                { "not": { "selector_matches": "[rel~=nofollow]" } }
-              ]
-            },
-            "eagerness": "moderate"
-          }
-        ],
-        "prerender": [
-          {
-            "where": {
-              "and": [
-                {
-                  "or": [
-                    { "href_matches": "/" },
-                    { "href_matches": "/article/*" },
-                    { "href_matches": "/profile/*" }
-                  ]
-                },
-                { "not": { "selector_matches": "[target=_blank]" } },
-                { "not": { "selector_matches": "[rel~=nofollow]" } }
-              ]
-            },
-            "eagerness": "conservative"
-          }
-        ]
-      }
-    </script>
 
     {{mochi.head}} {{mochi.css}}
   </head>

@@ -1,0 +1,3 @@
+[test]
+# The mochi-framework submodule under vendor/ ships its own test suite.
+pathIgnorePatterns = ["vendor/**"]

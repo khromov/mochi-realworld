@@ -1,14 +1,20 @@
 /**
- * Trimmed against the weights the reference's Google Fonts URL requested: Merriweather Sans is unused
- * by the theme, and the italics cost ~170 kB because Bun base64-inlines every font into the bundled
- * CSS — see FONT_ISSUE.md.
+ * Exactly the faces the reference app's Google Fonts URL requests — same families, weights and
+ * italics — self-hosted instead of fetched from fonts.googleapis.com.
  */
 import '@fontsource/titillium-web/latin-700.css';
+
+import '@fontsource/source-serif-pro/latin-400.css';
+import '@fontsource/source-serif-pro/latin-700.css';
+
+import '@fontsource/merriweather-sans/latin-400.css';
+import '@fontsource/merriweather-sans/latin-700.css';
 
 import '@fontsource/source-sans-pro/latin-300.css';
 import '@fontsource/source-sans-pro/latin-400.css';
 import '@fontsource/source-sans-pro/latin-600.css';
 import '@fontsource/source-sans-pro/latin-700.css';
-
-import '@fontsource/source-serif-pro/latin-400.css';
-import '@fontsource/source-serif-pro/latin-700.css';
+import '@fontsource/source-sans-pro/latin-300-italic.css';
+import '@fontsource/source-sans-pro/latin-400-italic.css';
+import '@fontsource/source-sans-pro/latin-600-italic.css';
+import '@fontsource/source-sans-pro/latin-700-italic.css';
